@@ -2,13 +2,15 @@
 // Title:         FindPowerCuts
 // Description:   FindPowerCuts description
 // Dependencies:  None
-// Author:        tif
+// Author:        tif, Yuri
 //
 //*****************************************************************************
 
 using com.softwareag.connectivity.ConnectivityPlugins;
 using com.softwareag.scike.Blackout_V2;
 using com.softwareag.scike.Blackout_Solar_V2;
+
+
 
 using com.softwareag.scike.SolarDataV2;
 using com.softwareag.scike.SensorDataV2;
