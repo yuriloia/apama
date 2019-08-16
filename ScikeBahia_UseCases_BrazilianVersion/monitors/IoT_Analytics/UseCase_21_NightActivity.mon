@@ -1,0 +1,126 @@
+package com.industry.analytics;
+
+
+using com.apama.correlator.timeformat.TimeFormat; 
+
+/** This event is ...  */
+monitor UseCase_21_NightActivity {
+	
+	action onload () {
+//		monitor.subscribe("Moving Average_S");
+//		monitor.subscribe("Standard Deviation_S");
+//		monitor.subscribe("Spikes_S");
+//		monitor.subscribe("Drift_S");
+//		monitor.subscribe("EnergyLvl_S_Low");
+//		monitor.subscribe("EnergyLvl_S_Standard");
+//		monitor.subscribe("EnergyLvl_S_High");
+//		monitor.subscribe("EnergyLvl_S_Extreme");
+//		monitor.subscribe("Night");
+//		monitor.subscribe("Night_S");
+		
+		sequence<string> sensorsSeq := ["0001V2", "0002V2", "0003V2", "0004V2", "0005V2", 
+		                                "0006V2", "0007V2", "0008V2", "0010V2", "0011V3"];
+		sequence<string> phases := ["R", "S", "T"];
+		//define the lower bounds of each energy level
+		dictionary<string, decimal> thresholdDict := {
+			"0001V2_R_low": 0.0d, "0001V2_R_standard": 300.0d, "0001V2_R_high": 600.0d, "0001V2_R_extreme": 1500.0d,
+			"0001V2_S_low": 0.0d, "0001V2_S_standard": 1800.0d, "0001V2_S_high": 2500.0d, "0001V2_S_extreme": 3500.0d,
+			"0001V2_T_low": 0.0d, "0001V2_T_standard": 400.0d, "0001V2_T_high": 1000.0d, "0001V2_T_extreme": 2000.0d,
+
+			"0002V2_R_low": 0.0d, "0002V2_R_standard": 100.0d, "0002V2_R_high": 1500.0d, "0002V2_R_extreme": 2500.0d,
+			"0002V2_S_low": 0.0d, "0002V2_S_standard": 300.0d, "0002V2_S_high": 1500.0d, "0002V2_S_extreme": 2500.0d,
+			"0002V2_T_low": 0.0d, "0002V2_T_standard": 500.0d, "0002V2_T_high": 2000.0d, "0002V2_T_extreme": 3500.0d,
+
+			"0003V2_R_low": 0.0d, "0003V2_R_standard": 1800.0d, "0003V2_R_high": 2500.0d, "0003V2_R_extreme": 3500.0d,
+			"0003V2_S_low": 0.0d, "0003V2_S_standard": 1800.0d, "0003V2_S_high": 2500.0d, "0003V2_S_extreme": 3500.0d,
+			"0003V2_T_low": 0.0d, "0003V2_T_standard": 1800.0d, "0003V2_T_high": 2500.0d, "0003V2_T_extreme": 3500.0d//,
+		}; 
+		
+//		dictionary<string, string> 
+		on wait(3.0) {
+			
+			//create IotAnalyticsKit channel for Night
+
+//			send com.industry.analytics.Analytic("Logger",["Data"],new sequence<string>, {"":""}) to "";
+			
+//			send com.industry.analytics.Analytic("Logger",["Filter1_0001V2_S"],new sequence<string>, {"":""}) to "";
+
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_R_Low"],new sequence<string>, {"":""}) to "";
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_R_Standard"],new sequence<string>, {"":""}) to "";
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_R_High"],new sequence<string>, {"":""}) to "";
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_R_Extreme"],new sequence<string>, {"":""}) to "";
+			
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_S_Low"],new sequence<string>, {"":""}) to "";
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_S_Standard"],new sequence<string>, {"":""}) to "";
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_S_High"],new sequence<string>, {"":""}) to "";
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_S_Extreme"],new sequence<string>, {"":""}) to "";
+			
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_T_Low"],new sequence<string>, {"":""}) to "";
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_T_Standard"],new sequence<string>, {"":""}) to "";
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_T_High"],new sequence<string>, {"":""}) to "";
+			send com.industry.analytics.Analytic("Logger",["EnergyLvl_T_Extreme"],new sequence<string>, {"":""}) to "";
+	
+//			send Analytic("Spike",["Data"],["Spikes_R","avg:Moving_Average_R","stddev:Standard_Deviation_R"],{"timeWindow":"900.0d","standardDeviationMultiple":"2.0d","warmUp":"15"}) to "";
+//			send Analytic("Spike",["Data"],["Spikes_S","avg:Moving_Average_S","stddev:Standard_Deviation_S"],{"timeWindow":"900.0d","standardDeviationMultiple":"2.0d","warmUp":"15"}) to "";
+//			send Analytic("Spike",["Data"],["Spikes_T","avg:Moving_Average_T","stddev:Standard_Deviation_T"],{"timeWindow":"900.0d","standardDeviationMultiple":"2.0d","warmUp":"15"}) to "";
+			
+			//		com.industry.analytics.Analytic("Average",["Data"],["Average"],{"bySourceId":"true","timeWindow":"900.0d"}) //900 = 15 min
+
+//		 Row: 1
+//		com.industry.analytics.Analytic("MinMax",["Average"],["MinMax"],{"timeWindow":"3600.0d"}) //3600 = 1h
+
+//		 Row: 2
+//			send Analytic("Drift",["Data"],["Drift_S"],{"offsetPeriod":"3600.0d","offsetType":"stddev"}) to "";
+
+//		 Row: 3 
+            
+            
+			string sensor;
+			string phase;
+			for sensor in sensorsSeq {
+				for phase in phases {
+
+					if(thresholdDict.hasKey(sensor + "_" + phase + "_low")) then {
+					
+//						send Analytic("Filter",["Moving_Average_" + sensor + "_" + phase],["Night_" + sensor + "_" + phase],{"hasParam":"[\"HH\"]","hasParam":"[\"mm\"]", "hasParam":"[\"" + sensor + "_" + phase + "\"]", "sourceId":"[\"" + sensor + "\"]"}) to "";
+						send Analytic("Filter",["Data"],["Filter_1_" + sensor + "_" + phase],{"hasParam":"[\"HH\"]"}) to "";
+
+						send Analytic("Filter",["Filter_1_" + sensor + "_" + phase],["Night_" + sensor + "_" + phase],{"hasParam":"[\"" + sensor + "_" + phase + "\"]", "sourceId":"[\"" + sensor + "\"]"}) to "";
+
+						send Analytic("Spike",["Night_" + sensor + "_" + phase],["Spikes_" + sensor + "_" + phase,"avg:Moving_Average_" + sensor + "_" + phase,"stddev:Standard_Deviation_" + sensor + "_" + phase],{"timeWindow":"900.0d","standardDeviationMultiple":"2.0d","warmUp":"15"}) to "";
+						
+						send Analytic("Filter",["Moving_Average_" + sensor + "_" + phase],["Filter_2_" + sensor + "_" + phase],{"hasParam":"[\"mm\"]"}) to "";
+						
+						send Analytic("Corridor",["Filter_2_" + sensor + "_" + phase],["EnergyLvl_" + phase + "_Low"],{"upperThreshold": (thresholdDict.getOrDefault(sensor + "_" + phase + "_standard")-0.001d).toString(),
+							"lowerThreshold":thresholdDict.getOrDefault(sensor + "_" + phase + "_low").toString(),"zone":"inside"}) to "";
+						send Analytic("Corridor",["Filter_2_" + sensor + "_" + phase],["EnergyLvl_" + phase + "_Standard"],{"upperThreshold":(thresholdDict.getOrDefault(sensor + "_" + phase + "_high")-0.001d).toString(),
+							"lowerThreshold":thresholdDict.getOrDefault(sensor + "_" + phase + "_standard").toString(),"zone":"inside"}) to "";
+						send Analytic("Corridor",["Filter_2_" + sensor + "_" + phase],["EnergyLvl_" + phase + "_High"],{"upperThreshold":(thresholdDict.getOrDefault(sensor + "_" + phase + "_extreme")-0.001d).toString(),
+							"lowerThreshold":thresholdDict.getOrDefault(sensor + "_" + phase + "_high").toString(),"zone":"inside"}) to "";
+						send Analytic("Corridor",["Filter_2_" + sensor + "_" + phase],["EnergyLvl_" + phase + "_Extreme"],{"upperThreshold":(thresholdDict.getOrDefault(sensor + "_" + phase + "_extreme")-0.001d).toString(),
+							"lowerThreshold":thresholdDict.getOrDefault(sensor + "_" + phase + "_low").toString(),"zone":"outside"}) to "";
+					}
+				}
+			}
+			
+//			for sensor in sensorsSeq {
+//				if(thresholdDict.hasKey(sensor + "_R_low")) then {
+//					send Analytic("Filter",["Moving_Average_R"],["Night_" + sensor + "_R"],{"hasParam":"[\"HH\"]","hasParam":"[\"mm\"]", "hasParam":"[\"dValue_R\"]", "sourceId":"[\"" + sensor + "\"]"}) to "";
+//					send Analytic("Corridor",["Night_" + sensor + "_R"],["EnergyLvl_R_Low"],{"upperThreshold": (thresholdDict.getOrDefault(sensor + "_R_standard")-0.001d).toString(),
+//						"lowerThreshold":thresholdDict.getOrDefault(sensor + "_R_low").toString(),"zone":"inside"}) to "";
+//					send Analytic("Corridor",["Night_" + sensor + "_R"],["EnergyLvl_R_Standard"],{"upperThreshold":(thresholdDict.getOrDefault(sensor + "_R_high")-0.001d).toString(),
+//						"lowerThreshold":thresholdDict.getOrDefault(sensor + "_R_standard").toString(),"zone":"inside"}) to "";
+//					send Analytic("Corridor",["Night_" + sensor + "_R"],["EnergyLvl_R_High"],{"upperThreshold":(thresholdDict.getOrDefault(sensor + "_R_extreme")-0.001d).toString(),
+//						"lowerThreshold":thresholdDict.getOrDefault(sensor + "_R_high").toString(),"zone":"inside"}) to "";
+//					send Analytic("Corridor",["Night_" + sensor + "_R"],["EnergyLvl_R_Extreme"],{"upperThreshold":(thresholdDict.getOrDefault(sensor + "_R_extreme")-0.001d).toString(),
+//						"lowerThreshold":thresholdDict.getOrDefault(sensor + "_R_low").toString(),"zone":"outside"}) to "";
+//				}
+//			}
+		}
+		on all Data() as data {
+			log data.toString() at INFO;
+
+		}
+	}
+	
+}

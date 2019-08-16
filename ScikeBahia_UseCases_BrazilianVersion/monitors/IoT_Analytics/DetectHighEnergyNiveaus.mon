@@ -1,0 +1,47 @@
+using com.industry.analytics.Data;
+
+using com.softwareag.scike.Blackout_V2;
+using com.softwareag.scike.SensorDataV2;
+
+
+/** This monitor is responsible for ...  */
+monitor DetectHighEnergyNiveaus {
+	action onload() {
+		log "Loaded monitor DetectHighEnergyNiveaus" at INFO;
+		monitor.subscribe("EnergyLvl_S_High");
+		monitor.subscribe("EnergyLvl_S_Extreme");
+		
+		monitor.subscribe("EnergyLvl_R_High");
+		monitor.subscribe("EnergyLvl_R_Extreme");
+		
+		monitor.subscribe("EnergyLvl_T_High");
+		monitor.subscribe("EnergyLvl_T_Extreme");
+//		monitor.subscribe("EnergyLvl_S_Standard");
+//		monitor.subscribe("EnergyLvl_S_Low");
+		
+		
+		on all Data() as data {
+			on SensorDataV2(sensorId = data.sourceId) as sd {
+				Blackout_V2 bo := new Blackout_V2;
+				bo.instance := "ufcg_uc21";
+				bo.dissolveBuildingName(data.sourceId);
+				string description := "Energyconsumption high - Average: " + 
+					data.dValue.toString() + "W.";
+				sequence<string> phase := [""];
+				if(data.params.hasKey(data.sourceId + "_R")) then {
+					phase := ["r"];
+				} else if(data.params.hasKey(data.sourceId + "_S")) then {
+					phase := ["s"];
+				} else {
+					phase := ["t"];
+				}
+				bo.createBlackoutError(integer.getUnique(), sd, description, "ufcg_uc21", 
+				                       "error", phase);
+//				print data.streamName.split("_")[1];
+				send bo to "mqtt:UFCG/alert/Apama/blackout_v2";
+				send bo to "State";
+				log bo.toString() at ERROR;
+			}
+		}
+	}
+}

@@ -1,0 +1,69 @@
+//*****************************************************************************
+// Title:         PowerConsumption
+// Description:   PowerConsumption description
+// Dependencies:  None
+// Author:        tif
+//
+//*****************************************************************************
+
+package com.softwareag.scike;
+
+event PowerConsumption {
+	float value1;
+	float value2;
+	float value3;
+	string date;
+}
+
+event PowerConsumption_Building {
+	string name;
+	float value1;
+	float value2;
+	float value3;
+	string date;
+}
+
+event NewSensorData {
+	string name;
+	float fpa;
+	float fpb;
+	float fpc;
+	float p1;
+	float p2;
+	float p3;
+	float q1;
+	float q2;
+	float q3;
+	string date;
+	float unix_timestamp_utc;
+}
+//SolarDataType is only building LEIAM (0005V2) because of positive energy values (energy production)
+event SolarDataV2 {
+	string sensorId;
+	string sensorType; 
+	float factor_R;
+	float factor_S;
+	float factor_T; 
+    float activePower_R; 
+	float activePower_S; 
+	float activePower_T;
+	float reactivePower_R; 
+	float reactivePower_S; 
+	float  reactivePower_T;
+	string readingTime;
+}
+
+event SensorDataV2 {
+	string sensorId;
+	string sensorType; 
+	float factor_R;
+	float factor_S;
+	float factor_T; 
+    float activePower_R; 
+	float activePower_S; 
+	float activePower_T;
+	float reactivePower_R; 
+	float reactivePower_S; 
+	float  reactivePower_T;
+	string readingTime;
+}

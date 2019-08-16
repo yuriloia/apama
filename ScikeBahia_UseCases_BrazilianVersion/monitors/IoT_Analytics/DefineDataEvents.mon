@@ -1,0 +1,101 @@
+using com.industry.analytics.Data;
+
+using com.softwareag.scike.SensorDataV2;
+using com.softwareag.scike.SolarDataV2;
+
+using com.apama.correlator.timeformat.TimeFormat;
+
+/** This monitor is responsible for ...  */
+monitor DefineDataEvents {
+	action onload() {
+		log "Loaded monitor DefineDataEvents" at INFO;
+//		monitor.subscribe("um:UFCG/pwrc/0001V2");
+//		monitor.subscribe("um:UFCG/pwrc/0002V2");   
+//		monitor.subscribe("um:UFCG/pwrc/0003V2");
+//		monitor.subscribe("um:UFCG/pwrc/0004V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0005V2");    
+//		monitor.subscribe("um:UFCG/pwrc/0006V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0007V2");
+//		monitor.subscribe("um:UFCG/pwrc/0008V2");
+//		monitor.subscribe("um:UFCG/pwrc/0010V2");
+//		monitor.subscribe("um:UFCG/pwrc/0011V3");
+
+		monitor.subscribe("mqtt:UFCG/pwrc/#");
+		/*
+		using com.apama.correlator.timeformat.TimeFormat; 
+		[...]
+		TimeFormat timeFormat := TimeFormat();
+		time:=timeFormat.parseTime("yyyy-MM-dd'T'HH:mm:ssZ",c_time); 
+		*/
+		TimeFormat timeFormat := TimeFormat();
+
+		on all SensorDataV2() as sensorData {
+			Data data := new Data;
+			data.streamName := "Data";
+			data.type := "r";
+			data.sourceId := sensorData.sensorId;
+//			data.timestamp := currentTime.toDecimal();
+			data.timestamp := timeFormat.parseTime("yyyy-MM-dd HH:mm:ss.SSSSSS", sensorData.readingTime).toDecimal();
+//			print "data.timestamp:" + data.timestamp.toString();
+			data.dValue := sensorData.activePower_S.toDecimal();
+			data.xValue := sensorData.activePower_R;
+			data.yValue := sensorData.activePower_S;
+			data.zValue := sensorData.activePower_T;
+			data.sValue := sensorData.toString();
+			// to specify the phase for calculations initialized in attribute dValue
+			
+//			send data to "Data";
+			
+			data.params.add(data.sourceId + "_S", "S");
+			
+            string time:= timeFormat.format(data.timestamp.toFloat(),"HH");
+            if(time.toInteger() > 20 or time.toInteger() < 6) then {
+        	  	data.params.add("HH", time);
+        	  
+        	  	//exception handling maybe necessary
+       	  		string minutes := timeFormat.format(data.timestamp.toFloat(),"mm");
+        	  	if(minutes.toInteger() % 15 = 0) then {
+       	  			data.params.add("mm", minutes);
+        	  		if(time = "21" and minutes.toInteger() = 0) then {
+        	  			data.params.remove("mm");
+        	  		}
+        	  	}
+          	}
+
+            send data to "Data";
+            //R
+			data.dValue := sensorData.activePower_R.toDecimal();
+			data.params.remove(data.sourceId + "_S");
+			data.params.add(data.sourceId + "_R", "R");
+			send data to "Data";
+			
+			//T
+			data.dValue := sensorData.activePower_T.toDecimal();
+			data.params.remove(data.sourceId + "_R");
+			data.params.add(data.sourceId + "_T", "T");
+			send data to "Data";
+            
+		}
+		
+//		on all SolarDataV2() as solarData {
+//			Data data := new Data;
+//			data.streamName := "Data";
+//			data.type := "r";
+//			data.sourceId := solarData.sensorId;
+//			data.timestamp := timeFormat.parseTime("yyyy-MM-dd HH:mm:ss.SSSSSS", solarData.readingTime).toDecimal();
+//			data.dValue := solarData.activePower_S.toDecimal();
+//			data.xValue := solarData.activePower_R;
+//			data.yValue := solarData.activePower_S;
+//			data.zValue := solarData.activePower_T;
+//			data.sValue := solarData.toString();
+//			
+//            string time:= timeFormat.format(data.timestamp.toFloat(),"HH");
+//            if(time.toInteger() > 20 or time.toInteger() < 6) then {
+//          	  data.params.add("HH", time);
+//          	  data.params.add("mm", timeFormat.format(data.timestamp.toFloat(),"mm"));
+//            }
+//            send data to "Data";
+//
+//		}
+	}
+}

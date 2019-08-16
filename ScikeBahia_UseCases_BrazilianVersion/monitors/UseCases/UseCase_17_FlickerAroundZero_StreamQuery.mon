@@ -1,0 +1,166 @@
+using com.softwareag.scike.SensorDataV2;
+using com.softwareag.scike.Blackout_V2;
+/** This monitor is responsible for ...  */
+monitor UseCase_17_FlickerAroundZero_StreamQuery {
+	
+	float time_on_phase := 120.0; //5 mins per period
+	integer numbers := 10;
+	float seconds := 60.0;
+	
+	
+	action onload() {
+		log "Loaded monitor UseCase_17_FlickerAroundZero_StreamQuery" at INFO;
+//		monitor.subscribe("um:UFCG/pwrc/0001V2");
+//		monitor.subscribe("um:UFCG/pwrc/0002V2");   
+//		monitor.subscribe("um:UFCG/pwrc/0003V2");
+//		monitor.subscribe("um:UFCG/pwrc/0004V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0006V2");
+//		monitor.subscribe("um:UFCG/pwrc/0007V2");  
+		
+		on all SensorDataV2(sensorType = "V2.0") as starter {
+			integer i := 0, j := 0;
+			boolean reactive_R_fire_useCase := true;
+			boolean reactive_S_fire_useCase := true;
+			boolean reactive_T_fire_useCase := true;
+			stream<SensorDataV2> usecaseStream := from a in all SensorDataV2(sensorType = starter.sensorType, sensorId = starter.sensorId)  retain numbers every numbers select a ;
+			sequence<SensorDataV2> seqSensor;
+			from usecaseStream: seqSensor {
+//				print i.toString();
+				SensorDataV2 sd;
+				for sd in seqSensor {
+//					stream<SensorDataV2> innerStream := from a in usecaseStream retain numbers-1 seconds select a ;
+//					print i.toString() + " " + j.toString() + " " + sd.toString() ;
+					if(j < numbers/2) then {
+						if(sd.reactivePower_R < 0.0) then {
+							reactive_R_fire_useCase := false;
+						}
+						if(sd.reactivePower_S < 0.0) then {
+							reactive_S_fire_useCase := false;
+						}
+						if(sd.reactivePower_T < 0.0) then {
+							reactive_T_fire_useCase := false;
+						}
+					}  else if(j < numbers) then {
+						if(sd.reactivePower_R > 0.0) then {
+							reactive_R_fire_useCase := false;
+						}
+						if(sd.reactivePower_S > 0.0) then {
+							reactive_S_fire_useCase := false;
+						}
+						if(sd.reactivePower_T > 0.0) then {
+							reactive_T_fire_useCase := false;
+						}
+					} 
+					j := j + 1;
+					if(j = numbers)then {
+							//trigger error event if a phase is true
+//						print "useCase R: " + reactive_R_fire_useCase.toString();
+//						print "useCase S: " + reactive_S_fire_useCase.toString();
+//						print "useCase T: " + reactive_T_fire_useCase.toString();
+						if(reactive_R_fire_useCase or reactive_S_fire_useCase or reactive_T_fire_useCase) then {
+							//send error event if the use case is true for one or more phases
+							createErrorEvent(sd, reactive_R_fire_useCase, reactive_S_fire_useCase, reactive_T_fire_useCase);
+						}
+					}
+					
+				}
+				i := i + 1;
+				usecaseStream.quit();
+			}
+		}
+//			stream<SensorDataV2> abstractStream := all SensorDataV2(sensorType = "V2.0");
+//			from abstractStream: seqStream {
+//				stream<SensorDataV2> usecaseStream := from a in abstractStream  partition by a.sensorID  numbers every numbers select a ;
+//			
+//			}
+//			sequence<SensorDataV2> seqSensor;
+//			from usecaseStream: seqSensor {
+//				print i.toString();
+//				SensorDataV2 sd;
+//				for sd in seqSensor {
+//					print i.toString() + " " + j.toString() + " " + sd.toString() ;
+//					j := j + 1;
+//				}
+//				i := i + 1;
+//			}
+			
+//			SensorDataV2 s; 
+//			from s in usecaseStream partition by s.sensorID retain numbers every 1 select s as sd{
+////				print sd.readingTime + " " + sd.reactivePower_R.toString();
+//				print sd.toString();
+//			}
+			
+			//usecaseStream.quit();
+		
+ 	}
+		
+		
+	action createErrorEvent (SensorDataV2 lastEvent,boolean reactive_R_fire_useCase,boolean reactive_S_fire_useCase,boolean reactive_T_fire_useCase) {
+		Blackout_V2 boV2 := new Blackout_V2;
+		boV2.dissolveBuildingName(lastEvent.sensorId);
+		string description := "UseCase 17 triggers on ";
+		string instance;
+		sequence<string> phases := new sequence<string>;
+		if(reactive_R_fire_useCase) then {
+			if(reactive_S_fire_useCase) then {
+				if(reactive_T_fire_useCase) then {
+					description := description + " all phases (r, s and t).";
+					phases.append("r");
+					phases.append("s");
+					phases.append("t");
+//					instance := "All phases (R, S and T) ";
+				} else {
+					description := description + " phases r and s.";
+					phases.append("r");
+					phases.append("s");
+//					instance := "Phases R and S ";
+				}
+			} else {
+				if(reactive_T_fire_useCase) then {
+					description := description + " phases r and t.";
+					phases.append("r");
+					phases.append("t");
+//					instance := "Phases R and T ";
+				} else {
+					description := description + " phase r.";
+					phases.append("r");
+//					instance := "Phase R ";
+				}
+			}
+		} else if(reactive_S_fire_useCase) then {
+			if(reactive_T_fire_useCase) then {
+				description := description + " phases s and t.";
+				phases.append("s");
+				phases.append("t");
+//				instance := "Phases S and T ";
+			} else {
+				description := description + " phase s.";
+				phases.append("s");
+//				instance := "Phase S ";
+			}
+		} else if (reactive_T_fire_useCase) then {
+			description := description + " phase t.";
+			phases.append("t");
+//			instance := "Phase T ";
+		} else {
+			print "THIS CASE SHOULD NOT HAPPEN, PLEASE DEBUG.";
+			description := description + " no phase.";
+			instance := "No phase ";
+		}
+			
+		instance := "ufcg_uc17";
+//			 + phase + " has values < " + near_zero_definition.toString() + " Watts for 3 measurements.";
+		string severity := "error";
+		integer error_id := integer.getUnique();
+		boV2.createBlackoutError(error_id, lastEvent, description, instance, severity, phases);
+		
+		sendErrorMessage(boV2);
+		
+	}
+	
+	action sendErrorMessage (Blackout_V2 bov2) {
+		send bov2 to "mqtt:UFCG/alert/Apama/blackout_v2";
+		send bov2 to "State";
+		log bov2.toString() at ERROR;
+	}
+}

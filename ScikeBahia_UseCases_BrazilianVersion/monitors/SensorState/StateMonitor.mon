@@ -1,0 +1,191 @@
+
+using com.softwareag.scike.SolarDataV2;
+using com.softwareag.scike.SensorDataV2;
+using com.softwareag.scike.Blackout_V2;
+using com.softwareag.scike.Blackout_Solar_V2;
+using com.softwareag.scike.state.StateEvent;
+using com.apama.correlator.timeformat.TimeFormat;
+
+
+event SensState {
+	boolean error;
+	boolean unknown;
+	boolean warning;
+	boolean blackout;
+}
+
+
+/** This monitor is responsible for ...  */
+monitor StateMonitor {
+
+	
+	action onload() {
+		log "Loaded monitor StateMonitor" at INFO;
+		
+		float frequency := 60.0;
+		float warningTime := 120.0; //120 sek -> 2 min ohne Event -> Warning
+		float noerror := 60.0;
+		
+//		monitor.subscribe("Data_SensorsV2"); //EventFilesChannel
+//		monitor.subscribe("SAG/processing/zero_aggregates");
+//		
+//		monitor.subscribe("um:UFCG/error/Apama/0001V2/");
+		monitor.subscribe("State");
+//		monitor.subscribe("UFCG/sag/Apama/blackout_solar_v2");
+
+		
+		dictionary<string, SensState> stateDict := new dictionary<string, SensState>;
+		
+		sequence<string> sensorsSeq := ["0001V2", "0002V2", "0003V2", "0004V2", "0005V2", 
+		                                "0006V2", "0007V2", "0008V2", "0010V2", "0011V3"];
+		string sensor;
+		for sensor in sensorsSeq {
+			//initialization
+			 stateDict.add(sensor, SensState(false, true, false, false));
+			
+//			boolean blackout := false;
+//			boolean error := false;
+//			boolean warning := true;
+			
+//			monitor.subscribe("UFCG/state/internal");
+			
+//			string channel := "um:UFCG/state/Apama/" + sensor;
+			string channel := "MQTTreliableTransportChain";
+
+			
+
+			
+			on all SensorDataV2(sensorId = sensor, sensorType = "V2.0") as sensorData{
+				stateDict.add(sensor, IncomingData(sensor, stateDict.getOrDefault(sensor)));
+				
+				on wait(warningTime) and not SensorDataV2(sensorId = sensor) {
+					if(sensor != "0005V2") then {
+						SensState st := stateDict.getOrDefault(sensor);
+						st.warning := true;
+						stateDict.add(sensor, st);
+						print sensor + "_WARNING";
+					}
+				}
+			}
+
+			on all SolarDataV2(sensorId = sensor, sensorType = "V2.0") as solar {
+				stateDict.add(sensor, IncomingData(sensor, stateDict.getOrDefault(sensor)));
+				on wait(warningTime) and not SolarDataV2(sensorId = sensor) {
+					SensState st := stateDict.getOrDefault(sensor);
+					st.warning := true;
+					stateDict.add(sensor, st);
+					print sensor + "_WARNING";
+				}
+			}
+
+			on all Blackout_V2(sensorID = sensor, instance = "ufcg_uc06") as sensorData or Blackout_V2(sensorID = sensor, instance = "ufpb_uc06") as sensorData or Blackout_Solar_V2(sensorID = sensor, instance = "ufcg_uc06") as solar {
+				SensState st := stateDict.getOrDefault(sensor);
+				st.blackout := true;
+				stateDict.add(sensor, st);		
+				print sensor + "_BLACKOUT"; 
+			}
+			
+			on all Blackout_V2(sensorID = sensor) as bo {
+				if(bo.instance.find("uc06") = -1) then {
+//					print "sets error at sensor " + sensor;
+					SensState st := stateDict.getOrDefault(sensor);
+					st.error := true;
+					stateDict.add(sensor, st);		
+					print sensor + "_ERROR";
+					on wait (noerror) and not Blackout_V2 (sensorID = sensor) as bo {
+						SensState st := stateDict.getOrDefault(sensor);
+						st.error := false;
+						stateDict.add(sensor, st);		
+						print sensor + "_NOW_GOOD";
+					}
+				}
+			}
+			
+//			on all 
+			
+//			on all SensorDataV2(sensorId = sensor, sensorType = "V2.0") as sensorData {
+//				print sensorData.toString();
+//				blackout := false;
+//				
+//				stream<Blackout_V2> errorStream := 
+//					from a in all Blackout_V2(sensorID = sensorData.sensorId) 
+//					within 60.0 select a;
+//				sequence<Blackout_V2> seqSensor;
+//				from errorStream: seqSensor {
+//					print "got there";
+//					Blackout_V2 bo;
+//					blackout := false;
+//					error := false;
+//					
+//					for bo in seqSensor {
+//						
+//						if (bo.instance = "ufcg_uc06") {
+//							blackout := true;
+//							print "blackout_" + sensor + " " + bo.toString();
+////							StateEvent se := StateEvent(bo.sensorID, "black", bo.error_timestamp);
+////							send se to channel;
+////							log se.toString() at INFO;
+//						} else {
+//							error := true;
+////							StateEvent se := StateEvent(bo.sensorID, "red", bo.error_timestamp);
+////							send se to channel;
+////							log se.toString() at INFO;
+////							print sensor + " " + bo.toString();
+//						}
+//					}
+//				}
+//			}
+			
+			on all wait (frequency) {
+				SensState st := stateDict.getOrDefault(sensor);
+
+//				print sensor + " - Periodical Info - Blackout: " + st.blackout.toString() + " - Warning: " + st.warning.toString() + " - Error: " + st.error.toString();
+
+				//vorläufige CurrentTime Verwendung
+				string pattern := "yyyy-MM-dd'T'HH:mm:ss.S'Z'";
+				string errortime := TimeFormat.formatWithTimeZone(currentTime, pattern, "UTC");
+				
+				
+				if (st.blackout = true) then {
+					StateEvent se := StateEvent(sensor, "blackout", errortime);
+					send se to channel;
+					
+//					route se;
+					log se.toString() at INFO;
+				} else if (st.warning = true) then {
+					StateEvent se := StateEvent(sensor, "warning", errortime);
+					send se to channel;
+
+//					route se;
+					log se.toString() at INFO;
+				} else if (st.error = true) then {
+					StateEvent se := StateEvent(sensor, "error", errortime);
+					send se to channel;
+
+//					route se;
+					log se.toString() at INFO;
+				} else if (st.unknown = true) then {
+					StateEvent se := StateEvent(sensor, "unknown", errortime);
+					send se to channel;
+
+//					route se;
+					log se.toString() at INFO;
+				} else {
+					StateEvent se := StateEvent(sensor, "good", errortime);
+					send se to channel;
+
+//					route se;
+					log se.toString() at INFO;
+				}
+			}
+		}
+	}
+	
+	action IncomingData(string sensor, SensState st) returns SensState {
+		st.unknown := false;
+		st.warning := false;
+		st.blackout := false;
+		print sensor + "_DATA INCOMING";
+		return st;
+	}
+}

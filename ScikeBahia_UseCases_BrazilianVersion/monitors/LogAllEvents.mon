@@ -1,0 +1,106 @@
+//*****************************************************************************
+// Title:         FindPowerCuts
+// Description:   FindPowerCuts description
+// Dependencies:  None
+// Author:        tif
+//
+//*****************************************************************************
+
+using com.softwareag.connectivity.ConnectivityPlugins;
+using com.softwareag.scike.Blackout_V2;
+using com.softwareag.scike.Blackout_Solar_V2;
+
+using com.softwareag.scike.SolarDataV2;
+using com.softwareag.scike.SensorDataV2;
+using com.softwareag.scike.PowerConsumption_Building;
+
+// TODO: Monitors and event definitions here
+
+monitor LogAllEvents{
+	action onload () {
+		ConnectivityPlugins.onApplicationInitialized();
+
+//		monitor.subscribe("PowerCut");
+		monitor.subscribe("Data_SensorsV2"); //EventFilesChannel
+//		monitor.subscribe("SAG/processing/zero_aggregates");
+//		
+//		monitor.subscribe("um:UFCG/pwrc/0001V2");
+//		monitor.subscribe("um:UFCG/pwrc/0002V2");   
+//		monitor.subscribe("um:UFCG/pwrc/0003V2");
+//		monitor.subscribe("um:UFCG/pwrc/0004V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0005V2");    
+//		monitor.subscribe("um:UFCG/pwrc/0006V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0007V2");
+//		monitor.subscribe("um:UFCG/pwrc/0008V2");
+//		monitor.subscribe("um:UFCG/pwrc/0010V2");
+//		monitor.subscribe("um:UFCG/pwrc/0011V3");
+
+
+		monitor.subscribe("mqtt:UFCG/pwrc/#");
+
+//		monitor.subscribe("Measurements");
+		
+		on all PowerConsumption_Building() as pcb {
+			log pcb.getTime().toString() + " " + pcb.toString() at INFO;
+			send pcb to "com.apama.queries";
+			send pcb to "mqtt:UFCG/pwrc/fake_old/";
+		}
+		
+
+		
+		on all SensorDataV2() as nsd {
+			//send nsd to "AllDataChannel";
+			//Fake Events are actually only in internal correlator channel
+			if(nsd.sensorId = "Fake_V2") then {
+				send nsd to "mqtt:UFCG/pwrc/fake_v2/";
+			} else if (nsd.sensorType = " V2.0") then {
+				//should only trigger whenn it's from an event file
+				nsd.sensorType := "V2.0"; //will not send again
+				if(nsd.sensorId = "0001V2") then {
+					send nsd to "mqtt:UFCG/pwrc/0001V2/";
+				} else if (nsd.sensorId = "0002V2") then {
+					send nsd to "mqtt:UFCG/pwrc/0002V2/";
+				} else if (nsd.sensorId = "0003V2") then {
+					send nsd to "mqtt:UFCG/pwrc/0003V2/";
+				} else if (nsd.sensorId = "0004V2") then {
+					send nsd to "mqtt:UFCG/pwrc/0004V2/";
+				} else if (nsd.sensorId = "0006V2") then {
+					send nsd to "mqtt:UFCG/pwrc/0006V2/";
+				} else if (nsd.sensorId = "0007V2") then {
+					send nsd to "mqtt:UFCG/pwrc/0007V2/";
+				} else if (nsd.sensorId = "0008V2") then {
+					send nsd to "mqtt:UFCG/pwrc/0008V2/";
+				} else if (nsd.sensorId = "0010V2") then {
+					send nsd to "mqtt:UFCG/pwrc/0010V2/";
+				} else if (nsd.sensorId = "0011V3") then {
+					send nsd to "mqtt:UFCG/pwrc/0011V3/";
+				}
+			} else {
+				log "\"SensorDataV2\", " + nsd.toString() at INFO;
+				send nsd to "com.apama.queries";	
+				send nsd to "DataView";
+			}
+		}
+		
+		on all SolarDataV2() as sdv2 {
+	//		log "\"SolarDataV2\", " + sdv2.toString() at INFO;
+	//		send sdv2 to "com.apama.queries";
+			if (sdv2.sensorType = " V2.0") then {
+				//should only trigger whenn it's from an event file
+				sdv2.sensorType := "V2.0";
+				if(sdv2.sensorId = "0005V2") then {
+					send sdv2 to "mqtt:UFCG/pwrc/0005V2/";
+				}
+			} else {
+				log "\"SolarDataV2\", " + sdv2.toString() at INFO;
+				send sdv2 to "com.apama.queries";
+				send sdv2 to "DataView";
+			}
+		}
+		
+		//for all use case 13 aggregations
+		on all Blackout_V2() as bo{
+			send bo to "com.apama.queries";
+		}
+	}
+}

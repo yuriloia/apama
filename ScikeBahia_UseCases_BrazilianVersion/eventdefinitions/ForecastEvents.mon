@@ -1,0 +1,96 @@
+
+package com.softwareag.scike.pvcast;
+
+
+event Cast {
+	integer globalradiation;
+	float temperature;
+	float precipitation;
+	integer globalradiation_clearsky;
+	integer power;
+	integer unixtimePublished;
+	integer unixtimeCast;
+	string loc;
+}
+
+
+//event incomingforecast {
+//	dictionary <string, dictionary <string, float> > castDict; 
+//	dictionary <string, cast> castDict; 
+//	string location;
+//}
+//
+//event outgoingforecast {
+//	dictionary <string, cast> castDict; 
+//	integer unixtime;
+//	string location;
+//}
+
+event incomingforecast {
+	dictionary <string, dictionary <string, float> > castDict; 
+	string location;
+}
+
+event outgoingforecast {
+	dictionary <string, dictionary <string, float> > castDict; 
+	integer unixtime;
+	string location;
+}
+
+
+//
+///** This event is ...  */
+//event pvforecast {
+//	cast cast_0_01;	
+//	cast cast_0_02;	
+//	cast cast_0_03;	
+//	cast cast_0_04;	
+//	cast cast_0_05;	
+//	cast cast_0_06;	
+//	cast cast_0_07;	
+//	cast cast_0_08;	
+//	cast cast_0_09;	
+//	cast cast_0_10;
+//	cast cast_0_11;	
+//	cast cast_0_12;	
+//	cast cast_0_13;	
+//	cast cast_0_14;	
+//	cast cast_0_15;	
+//	cast cast_0_16;	
+//	cast cast_0_17;	
+//	cast cast_0_18;	
+//	cast cast_0_19;	
+//	cast cast_0_20;	
+//	cast cast_0_21;	
+//	cast cast_0_22;	
+//	cast cast_0_23;
+//	cast cast_1_00;
+//	wildcard cast cast_1_01;	
+//	wildcard cast cast_1_02;	
+//	wildcard cast cast_1_03;	
+//	wildcard cast cast_1_04;	
+//	wildcard cast cast_1_05;	
+//	wildcard cast cast_1_06;	
+//	wildcard cast cast_1_07;	
+//	wildcard cast cast_00_08;	
+//	wildcard cast cast_00_09;	
+//	wildcard cast cast_00_10;
+//	wildcard cast cast_00_11;	
+//	wildcard cast cast_00_12;	
+//	wildcard cast cast_00_13;	
+//	wildcard cast cast_00_14;	
+//	wildcard cast cast_00_15;	
+//	cast cast_00_16;	
+//	cast cast_00_17;	
+//	cast cast_00_18;	
+//	cast cast_00_19;	
+//	cast cast_00_20;	
+//	cast cast_00_21;	
+//	cast cast_00_22;	
+//	cast cast_00_23;
+//	cast cast_01_00;	
+//	
+//	
+//	
+//}
+

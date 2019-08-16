@@ -1,0 +1,195 @@
+//*****************************************************************************
+// Title:         FindPowerCuts
+// Description:   FindPowerCuts description
+// Dependencies:  None
+// Author:        tif
+//
+//*****************************************************************************
+
+using com.softwareag.scike.SolarDataV2;
+using com.softwareag.scike.SensorDataV2;
+using com.softwareag.scike.PowerConsumption_Building;
+using com.softwareag.scike.Blackout;
+using com.softwareag.scike.Blackout_V2;
+using com.softwareag.scike.Blackout_Solar_V2;
+using com.softwareag.scike.state.StateEvent;
+
+
+// TODO: Monitors and event definitions here
+
+monitor UseCase_6_FindPowerCuts {
+	float time_gap_for_error_message := 600.0; //time in sec - actual 10 min => 600 sec
+//	float time_gap_for_error_message := 50.0; //time in sec - actual 10 min => 600 sec
+//	integer counter_blackouts := 10000; //use case 6 -> 6000
+	
+	action onload () {
+		
+		
+//		monitor.subscribe("PowerCut");
+//		
+		monitor.subscribe("Data_SensorsV2"); //EventFilesChannel
+
+		boolean firstrun := true;
+		
+//		monitor.subscribe("um:UFCG/pwrc/0001V2");
+//		monitor.subscribe("um:UFCG/pwrc/0002V2");   
+//		monitor.subscribe("um:UFCG/pwrc/0003V2");
+//		monitor.subscribe("um:UFCG/pwrc/0004V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0005V2");    
+//		monitor.subscribe("um:UFCG/pwrc/0006V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0007V2");    
+//		monitor.subscribe("um:UFCG/pwrc/0008V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0010V2");   
+//		monitor.subscribe("um:UFCG/pwrc/0011V3");   
+		monitor.subscribe("mqtt:UFCG/pwrc/#");
+
+		//subscribe on UM
+//		monitor.subscribe("um:UFCG/BlocoCJ/ApparentActiveReactivePower/Data_SensorsV2/SensorInput");
+//		monitor.subscribe("um:UFCG/pwrc/cj_001");
+//		monitor.subscribe("um:UFCG/pwrc/cj_001_v2");
+
+		on all SensorDataV2(sensorType = "V2.0") as nsd {
+			
+			if(currentTime = 0.0) then {
+				print "!!! IMPORTANT !!!";
+				print "Xclock or DataPlayer live data is enabled - Correlator is unable to find Blackouts from live events!";
+				firstrun := false;
+			}
+		//	on SensorDataV2(sensorID = nsd.sensorID) within (10.0) {
+		//		print "confirm confirm";
+		//	}
+			
+			on wait(time_gap_for_error_message) and not SensorDataV2(sensorId = nsd.sensorId) { 
+//				if(nsd_after.toString() = "") then {
+//					//print pcb.toString() + " " + pcb_after.toString();
+//					print "in there - \n" + nsd.toString() + "\n " + nsd_after.toString() + "\n";
+//				} else {
+					//print pcb.toString() + " " + pcb_after.toString();
+		
+				
+				Blackout_V2 fe := new Blackout_V2;
+				fe.dissolveBuildingName(nsd.sensorId);
+				string description := "More than " + (time_gap_for_error_message/60.0).toString() + " min without incoming events from building " + fe.building + ".";
+				string instance := "ufcg_uc06";
+				string severity := "error";
+				sequence<string> phases := ["r", "s", "t"];
+				fe.createBlackoutError(integer.getUnique(), nsd, description, instance, severity, phases);
+				
+				send fe to "mqtt:UFCG/alert/Apama/blackout_v2";
+				send fe to "State";
+				log fe.toString() at ERROR;
+				
+				/*Blackout_V2 fe := new Blackout_V2;
+					fe.error_id := counter_blackouts;
+					fe.building := fe.dissolveBuildingName(nsd.sensorID);
+					fe.description := "More than " + (time_gap_for_error_message/60.0).toString() + " min without incoming events from building " + fe.building + ".";
+					fe.instance := "Blackout_" + nsd.sensorType;
+					fe.lastEvent := nsd;
+					fe.sensorID := nsd.sensorID;
+					fe.severity := "error";
+					fe.unixtimestamp_utc := nsd.getTime()*1000.0;
+		
+					send fe to "mqtt:UFCG/alert/Apama/blackout_v2";
+					log fe.toString() at ERROR; */
+					
+					on SensorDataV2(sensorId = nsd.sensorId) -> SensorDataV2(sensorId = nsd.sensorId) {
+						print "AfterBlackout notification - correlator is running well.";
+//						string stateChannel := "UFCG/state/internal";
+//						StateEvent se := StateEvent(fe.sensorID, "green", nsd.readingTime);
+//						send se to stateChannel;
+//						log se.toString() at INFO;
+					}
+					//increment counter blackouts
+//					counter_blackouts := counter_blackouts + 1;
+				
+					
+//				}
+			}
+			//log pcb.getTime().toString() + " " + pcb.toString() at INFO;
+			//send pcb to "com.apama.queries";
+		}
+		
+		on all PowerConsumption_Building() as pcb {
+			
+			//log nsd.toString() at INFO;
+			//send pcb to "um:UFCG/BlocoCJ/ApparentActiveReactivePower/Data_SensorsV2/SensorInput";
+			
+			if(pcb.value2 > 10000.0) then {
+				Blackout fe := new Blackout;
+				fe.error_id := integer.getUnique();
+				fe.building := pcb.name;
+				fe.description := "More than " + time_gap_for_error_message.toString() + " sec without incoming events from building " + pcb.name + ".";
+				fe.instance := "Blackout";
+				fe.lastEvent := pcb;
+				fe.sensorID := "Fake";
+				fe.severity := "error";
+				fe.unixtimestamp_utc := pcb.getTime()*1000.0;
+	
+				send fe to "mqtt:UFCG/alert/Apama/blackout";
+				log fe.toString() at ERROR;
+				
+				//increment counter blackouts
+//				counter_blackouts := counter_blackouts + 1;
+			}
+		}
+
+		
+		on all SolarDataV2() as nsd {
+			
+			
+			//	on SensorDataV2(sensorID = nsd.sensorID) within (10.0) {
+			//		print "confirm confirm";
+			//	}
+		
+				
+				on wait(time_gap_for_error_message) and not SolarDataV2(sensorId = nsd.sensorId) { 
+//					if(nsd_after.toString() = "") then {
+//						//print pcb.toString() + " " + pcb_after.toString();
+//						print "in there - \n" + nsd.toString() + "\n " + nsd_after.toString() + "\n";
+//					} else {
+						//print pcb.toString() + " " + pcb_after.toString();
+						
+					Blackout_Solar_V2 fe := new Blackout_Solar_V2;
+					fe.dissolveBuildingName(nsd.sensorId);
+					string description := "More than " + (time_gap_for_error_message/60.0).toString() + " min without incoming events from building " + fe.building + ".";
+					string instance := "ufcg_uc06";
+					string severity := "error";
+					sequence<string> phases := ["r", "s", "t"];
+					fe.createBlackoutError(integer.getUnique(), nsd, description, instance, severity, phases);
+					
+					send fe to "mqtt:UFCG/alert/Apama/blackout_solar_v2";
+					send fe to "State";
+					log fe.toString() at ERROR;
+						
+					
+					/*	fe.error_id := counter_blackouts;
+						fe.building := fe.dissolveBuildingName(nsd.sensorID);
+						fe.description := "More than " + (time_gap_for_error_message/60.0).toString() + " min without incoming events from building " + fe.building + ".";
+						fe.instance := "Blackout_" + nsd.sensorType;
+						fe.lastEvent := nsd;
+						fe.sensorID := nsd.sensorID;
+						fe.severity := "error";
+						fe.unixtimestamp_utc := nsd.getTime()*1000.0;
+			*/
+				
+					
+					
+						on SensorDataV2(sensorId = nsd.sensorId) -> SensorDataV2(sensorId = nsd.sensorId) {
+							print "AfterSolarBlackout notification - correlator is running well.";
+							string stateChannel := "mqtt:UFCG/state/Apama/" + fe.sensorID;
+							StateEvent se := StateEvent(fe.sensorID, "green", nsd.readingTime);
+							send se to stateChannel;
+							log se.toString() at INFO;
+						}
+						//increment counter blackouts
+//						counter_blackouts := counter_blackouts + 1;
+					
+						
+//					}
+				}
+				//log pcb.getTime().toString() + " " + pcb.toString() at INFO;
+				//send pcb to "com.apama.queries";
+			}
+	}	
+
+}

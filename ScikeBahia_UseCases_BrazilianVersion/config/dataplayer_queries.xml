@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dataplayer SYSTEM "http://www.apama.com/dtd/dp.dtd">
+<!-- Apama Data Player Query Configurations File -->
+
+<queryConfigs>
+  <query name="Query_NewSensorData_03_18">
+    <datasourceName><![CDATA[JDBC]]></datasourceName>
+    <serviceId><![CDATA[com.apama.adbc.JDBC_JDBCAdapter1]]></serviceId>
+    <databaseName><![CDATA[scike]]></databaseName>
+    <databaseFullName><![CDATA[jdbc:mysql://localhost:3306/scike]]></databaseFullName>
+    <isNamedQuery><![CDATA[true]]></isNamedQuery>
+    <queryName><![CDATA[findAll]]></queryName>
+    <returnType><![CDATA[Native]]></returnType>
+    <transform><![CDATA[]]></transform>
+    <speed><![CDATA[1.0]]></speed>
+    <description><![CDATA[]]></description>
+    <queryString><![CDATA[]]></queryString>
+    <parameters>
+      <parameterData name="TABLE_NAME" value="blococj_sensors_v2_03_pc" type="String" description="Name of a table to query" defaultValue="">
+        <extraParams class="linked-hash-map"/>
+      </parameterData>
+    </parameters>
+    <transformParameters/>
+    <includeTimeEvent><![CDATA[false]]></includeTimeEvent>
+    <eventType><![CDATA[NewSensorData]]></eventType>
+    <timeColumn><![CDATA[timestamp]]></timeColumn>
+  </query>
+</queryConfigs>

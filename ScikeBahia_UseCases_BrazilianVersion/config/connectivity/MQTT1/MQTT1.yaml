@@ -1,0 +1,115 @@
+# $Copyright (c) 2016 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.$
+# Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG
+
+###########################################################################################
+# MQTT connectivity configuration for sending/receiving events to/from an MQTT broker 
+#
+# Most user-accessible configuration is available and documented in the properties file,
+# except for the codecs used to do the EPL <-> binary message translation.
+###########################################################################################
+
+connectivityPlugins:
+  MQTT1Transport:
+    libraryName: connectivity-mqtt
+    class: MQTTTransport
+  classifierCodec:
+    libraryName: ClassifierCodec
+    class: ClassifierCodec
+  JSONCodec:
+    directory: ${APAMA_HOME}/lib/
+    classpath:
+    - json-codec.jar
+    class: com.softwareag.connectivity.plugins.JSONCodec
+  stringCodec:
+    libraryName: connectivity-string-codec
+    class: StringCodec
+
+
+dynamicChainManagers:
+  MQTT1Manager:
+    transport: MQTT1Transport
+    managerConfig:
+      # WARNING: If you are using multiple MQTT bundles, make sure that each chain manager
+      # is configured with a distinct prefix to avoid unexpected behaviour
+      #
+      channelPrefix: "mqtt:"
+      brokerURL: ${MQTT1_brokerURL}
+      certificateAuthorityFile: ${MQTT1_certificateAuthorityFile}
+      acceptUnrecognizedCertificates: ${MQTT1_acceptUnrecognizedCertificates}
+      authentication:
+        username: ${MQTT1_username}
+        password: ${MQTT1_password}
+
+dynamicChains:
+  MQTT1Chain:
+#    - apama.eventString:
+#        suppressLoopback: true
+    # Add codecs here to do the transformation
+    - apama.eventMap:
+        allowMissing: true
+        suppressLoopback: true
+    - classifierCodec:
+        rules:
+            - com.softwareag.scike.SolarDataV2:
+                - payload.sensorId: "0005V2"
+            - com.softwareag.scike.SensorDataV2:
+    - JSONCodec
+    - stringCodec:
+        nullTerminated: false
+    - MQTT1Transport
+
+    
+    
+# UM CONNECTIVITY YAML
+#connectivityPlugins:
+#  UMTransport:
+#    libraryName: UMConnectivity
+#    class: UMTransport
+#  UMStringCodec:
+#    libraryName: UMConnectivity
+#    class: UMStringCodec
+#  JSONCodec:
+#    directory: ${APAMA_HOME}/lib/
+#    classpath:
+#    - json-codec.jar
+#    class: com.softwareag.connectivity.plugins.JSONCodecmos
+
+    
+#dynamicChainManagers:
+#  UMManager:
+#    transport: UMTransport
+ #   managerConfig:
+ #     rnames: ${RNAME}
+ #     channel:
+ #       prefix: "um:"
+ #       missingChannelMode: create
+ #       includePrefixOnUM: false
+ #       escapeNamesOnUM: false
+ 
+# dynamicChains:
+#  UMErrorEventcChain:
+#    - apama.eventMap:
+#   #     defaultEventType: SensorDataV2
+#   #     defaultChannel: UFCG/pwrc/0001V2
+#        allowMissing: true
+#        suppressLoopback: true
+#        description: "@{um.rnames}"
+#        remoteAddress: "@{um.rnames}"
+#    - mapperCodec:
+#       com.softwareag.scike.pvcast.incomingforecast:
+#          towardsHost:
+#             mapFrom:
+#                - payload.castDict: payload
+#    - classifierCodec:
+#         rules:
+#            - com.softwareag.scike.SolarDataV2:
+#                - payload.sensorId: "0005V2"
+#            - com.softwareag.scike.SensorDataV2:
+#                - payload.sensorType: "V2.0"
+#            - com.softwareag.scike.pvcast.incomingforecast:
+#    - JSONCodec
+#    - UMStringCodec:
+#        nullTerminated: false
+#    - UMTransport:
+#        #channelPattern: "um:UFCG/[\u0000-\U0010ffff]"
+#        channelPattern: ".*"

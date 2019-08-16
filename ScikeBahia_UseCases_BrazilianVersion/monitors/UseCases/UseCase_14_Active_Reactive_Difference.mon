@@ -1,0 +1,187 @@
+using com.softwareag.scike.SensorDataV2;
+using com.softwareag.scike.Blackout_V2;
+/** This monitor is responsible for ...  */
+monitor UseCase14_Active_Reactive_Difference {
+
+	integer numbers := 5;
+	
+	action onload() {
+		log "Loaded monitor UseCase14_Active_Reactive_Difference" at INFO;
+		
+//		monitor.subscribe("um:UFCG/pwrc/0001V2");
+//		monitor.subscribe("um:UFCG/pwrc/0002V2");   
+//		monitor.subscribe("um:UFCG/pwrc/0003V2");
+//		monitor.subscribe("um:UFCG/pwrc/0004V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0006V2");
+//		monitor.subscribe("um:UFCG/pwrc/0007V2");   
+//		monitor.subscribe("um:UFCG/pwrc/0008V2");
+//		monitor.subscribe("um:UFCG/pwrc/0010V2");   
+//		monitor.subscribe("um:UFCG/pwrc/0011V3");   
+
+		monitor.subscribe("mqtt:UFCG/pwrc/#");
+
+		float limit := 0.25;
+
+		sequence<string> sensorsSeq := ["0001V2", "0002V2", "0003V2", "0004V2", "0005V2", 
+		                                "0006V2", "0007V2", "0008V2", "0010V2", "0011V3"];
+
+		sequence<string> phasesSeq := ["r", "s", "t"];
+		sequence<string> scenarioSeq := ["A", "B"];
+		
+		string sensor;
+		for sensor in sensorsSeq {
+			
+			dictionary<string, sequence<SensorDataV2> > oldDictSeq := new dictionary<string, sequence<SensorDataV2> >;
+			dictionary<string, integer > errorDictSeq := new dictionary<string, integer >;
+			
+			on all SensorDataV2(sensorType = "V2.0", sensorId = sensor) as starter {
+				stream<SensorDataV2> usecaseStream := from a in all SensorDataV2(sensorId = starter.sensorId, sensorType = starter.sensorType) retain numbers every numbers select a ;
+//				stream<SensorDataV2> usecaseStream := from a in all SensorDataV2(sensorType = "V2.0") partition by a.sensorID retain numbers every numbers select a ;
+
+				sequence<SensorDataV2> seqSensor;
+
+		
+				from usecaseStream: seqSensor {
+					SensorDataV2 sd;
+					dictionary<string, boolean> scenarioDict := {"Ar":true, "Br":true, "As":true, "Bs":true, "At":true, "Bt":true};
+//					boolean scenarioA_r := true; 
+//					boolean scenarioB_r := true; 
+//					boolean scenarioA_s := true; 
+//					boolean scenarioB_s := true; 
+//					boolean scenarioA_t := true; 
+//					boolean scenarioB_t := true; 
+//					integer error_id_before := 0;
+					integer i := 0;
+					boolean furtherErrorId := false;
+
+				for sd in seqSensor {
+//					print i.toString() + " - " + sd.toString();
+					//scenario 1 - reactive under limit, active above limit
+					if((sd.activePower_R > -limit and sd.activePower_R < limit) or 
+						(sd.reactivePower_R  < -limit or sd.reactivePower_R > limit))then {
+							scenarioDict.add("Ar", false);
+//					print "Ar false";
+					} 
+					//scenario 2 - active under limit, reactive above limit
+					if((sd.reactivePower_R > -limit and sd.reactivePower_R < limit) or 
+						(sd.activePower_R  < -limit or sd.activePower_R > limit)) then {
+							scenarioDict.add("Br", false);
+//							print "Br false";
+					} 
+					//scenario 1 - reactive under limit, active above limit
+					if((sd.activePower_S > -limit and sd.activePower_S < limit) or 
+						(sd.reactivePower_S  < -limit or sd.reactivePower_S > limit))then {
+							scenarioDict.add("As", false);
+//							print "As false";
+					}
+					//scenario 2 - active under limit, reactive above limit
+					if((sd.reactivePower_S > -limit and sd.reactivePower_S < limit) or 
+						(sd.activePower_S  < -limit or sd.activePower_S > limit)) then {
+							scenarioDict.add("Bs", false);
+//							print "Bs false";
+					} 
+					//scenario 1 - reactive under limit, active above limit
+					if((sd.activePower_T > -limit and sd.activePower_T < limit) or 
+						(sd.reactivePower_T  < -limit or sd.reactivePower_T > limit))then {
+							scenarioDict.add("At", false);
+//							print "At false";
+					}
+					//scenario 2 - active under limit, reactive above limit
+					if((sd.reactivePower_T > -limit and sd.reactivePower_T < limit) or 
+						(sd.activePower_T  < -limit or sd.activePower_T > limit)) then {
+							scenarioDict.add("Bt", false);
+//							print "Bt false";
+					} 
+			
+//					print i.toString() + " " + sd.toString();
+//					print "Phase R - A: " + scenarioDict.getOrDefault("Ar").toString() + " - B: " + scenarioDict.getOrDefault("Br").toString();
+//					print "Phase S - A: " + scenarioDict.getOrDefault("As").toString() + " - B: " + scenarioDict.getOrDefault("Bs").toString();
+//					print "Phase T - A: " + scenarioDict.getOrDefault("At").toString() + " - B: " + scenarioDict.getOrDefault("Bt").toString();
+
+
+					string phase;
+					string scenario;
+				
+					for phase in phasesSeq {
+						for scenario in scenarioSeq {
+							SensorDataV2 old;
+							integer error_id := -1;
+//							print "oldDict: " + oldDictSeq.toString();
+							if(oldDictSeq.hasKey(sd.sensorId + "_" + scenario + phase) and scenarioDict.getOrDefault(scenario + phase) = true) then {
+								sequence<SensorDataV2> oldSeq := oldDictSeq.getOr(sd.sensorId + "_" + scenario + phase, seqSensor);
+								for old in oldSeq {
+									//exists an event in the sequence before
+//									print "sd: " + sd.toString();
+//									print  "old: " + old.toString();
+									if(old = sd) then {
+//										print "useSameErrorId";
+										furtherErrorId := true;
+									}
+								}
+							}
+//							print i.toString() + " scenario_phase - " + scenario + phase + " - further: " + furtherErrorId.toString();
+							if(i = numbers-1) then {
+//								print scenarioDict.toString();
+								if(scenarioDict.getOrDefault(scenario + phase) = true) then {
+									if(furtherErrorId) then {
+										error_id := errorDictSeq.getOrDefault(sd.sensorId + "_" + scenario + phase);
+										furtherErrorId := false;
+									} else {
+										error_id := integer.getUnique();
+									}
+//									print "error";
+//									print scenarioDict.toString();
+									createErrorMessage(sd, phase, scenario, error_id);
+									oldDictSeq.add(sd.sensorId + "_" + scenario + phase, seqSensor);
+									errorDictSeq.add(sd.sensorId + "_" + scenario + phase, error_id);
+								}
+							}
+						}
+					}
+					i := i+1;
+//						if(i = numbers) then {
+//						print "would quit";
+//						usecaseStream.quit();
+//						}
+//						print scenarioDict.toString();
+//						print oldDictSeq.toString();
+//						print errorDictSeq.toString();
+				}
+//					print "quit";
+					usecaseStream.quit();
+				}
+			}
+		}
+	}
+		
+		
+	
+	
+	action createErrorMessage(SensorDataV2 lastEvent, string phase, string scenario, integer error_id) {
+//		log lastEvent.toString() + " phase " + phase + " scenario " + scenario at  ERROR;
+//		print "Phase R - A: " + scenarioDict.getOrDefault("Ar").toString() + " - B: " + scenarioDict.getOrDefault("Br").toString();
+//		print "Phase S - A: " + scenarioDict.getOrDefault("As").toString() + " - B: " + scenarioDict.getOrDefault("Bs").toString();
+//		print "Phase T - A: " + scenarioDict.getOrDefault("At").toString() + " - B: " + scenarioDict.getOrDefault("Bt").toString();
+//		print error_id.toString();
+//		print "\n";
+		
+		Blackout_V2 boV2 := new Blackout_V2;
+		boV2.dissolveBuildingName(lastEvent.sensorId);
+		string description := "UseCase 14_" + scenario + " triggers on phase " + phase;
+		string instance := "ufcg_uc14";
+		
+			//			 + phase + " has values < " + near_zero_definition.toString() + " Watts for 3 measurements.";
+		string severity := "error";
+		sequence<string> phases := new sequence<string>;
+		phases.append(phase);
+		boV2.createBlackoutError(error_id, lastEvent, description, instance, severity, phases);
+		
+		sendErrorMessage(boV2);		
+	}
+	
+	action sendErrorMessage (Blackout_V2 bov2) {
+		send bov2 to "mqtt:UFCG/alert/Apama/blackout_v2";
+		send bov2 to "State";
+		log bov2.toString() at ERROR;
+	}
+}

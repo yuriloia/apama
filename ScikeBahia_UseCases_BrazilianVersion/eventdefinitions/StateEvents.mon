@@ -1,0 +1,9 @@
+
+package com.softwareag.scike.state;
+/** This event is ...  */
+@com.softwareag.connectivity.MessageId("readingTime")
+event StateEvent {
+			string sensorID;	//0001V2,...
+			string state;		//red = error, yellow = warning, green = good, black = no data
+			string readingTime; //stringDate 2018-10- ....
+}

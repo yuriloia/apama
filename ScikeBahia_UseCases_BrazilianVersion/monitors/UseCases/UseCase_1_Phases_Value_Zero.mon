@@ -1,0 +1,228 @@
+//*****************************************************************************
+// Title:         Phases_Value_Zero
+// Description:   Phases_Value_Zero description
+// Dependencies:  None
+// Author:        tif
+//
+//*****************************************************************************
+
+
+using com.softwareag.scike.SolarDataV2;
+using com.softwareag.scike.SensorDataV2;
+// TODO: Monitors and event definitions here
+using com.softwareag.scike.Blackout_V2;
+// TODO: Monitors and event definitions here
+
+monitor UseCase_1_Phases_Value_Zero { 
+	
+	
+	//only active => zero - additional monitor
+	
+	
+	event PublishedError {
+		SensorDataV2 measurement1;
+		SensorDataV2 measurement2;
+		SensorDataV2 measurement3;
+		Blackout_V2 errorEvent;
+	}
+	
+//	integer defaultUseCaseErrorNumber := 20000;
+	//float time_gap_for_error_message := 5.0; //time in sec - actual 5 min => 302 sec
+//	integer counter_blackouts := defaultUseCaseErrorNumber; //use case 1 -> 1000
+	float correlator_time_last_error := 0.0;
+	float time_gap_between_new_error_ids := 61.0; // 2 min between error Ids creates new error Id
+	float near_zero_definition := 0.25; //defined by edmar (Bahia)
+	
+	dictionary <string, PublishedError> publishedErrorMeasurements := new dictionary<string, PublishedError>;
+
+	
+	action onload () {
+		
+//		monitor.subscribe("AllDataChannel");
+//		monitor.subscribe("um:UFCG/pwrc/0001V2");
+
+//		monitor.subscribe("um:UFCG/pwrc/0001V2");
+//		monitor.subscribe("um:UFCG/pwrc/0002V2");   
+//		monitor.subscribe("um:UFCG/pwrc/0003V2");
+//		monitor.subscribe("um:UFCG/pwrc/0004V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0006V2");
+//		monitor.subscribe("um:UFCG/pwrc/0007V2");     
+//		monitor.subscribe("um:UFCG/pwrc/0008V2");
+//		monitor.subscribe("um:UFCG/pwrc/0010V2");  
+//		monitor.subscribe("um:UFCG/pwrc/0011V3");  
+		monitor.subscribe("mqtt:UFCG/pwrc/#");
+
+		//needs to be unchecked in this use case (solar panel)
+		//monitor.subscribe("um:UFCG/pwrc/0005V2");    
+				
+		//monitor.subscribe("Data_SensorsV2");
+		
+		on all SensorDataV2(sensorType = "V2.0", activePower_R in [-near_zero_definition:near_zero_definition]) as nsd -> 
+		SensorDataV2(sensorType = "V2.0", activePower_R in [-near_zero_definition:near_zero_definition]) as nsd2 -> 
+		SensorDataV2(sensorType = "V2.0", activePower_R in [-near_zero_definition:near_zero_definition]) as nsd3 {
+			if(nsd.sensorId = nsd2.sensorId and nsd2.sensorId = nsd3.sensorId) then {
+				float averagePowerR := (nsd.activePower_R +  nsd2.activePower_R + nsd3.activePower_R) / 3.0;
+				if (averagePowerR < near_zero_definition and averagePowerR > -near_zero_definition) then {
+//					Blackout_V2 boV2 := new Blackout_V2;
+//					boV2.dissolveBuildingName(nsd.sensorId);
+//					string description := "Phase R has values < " + near_zero_definition.toString() + " Watts for 3 measurements.";
+//					string instance := "Phase R is under " + near_zero_definition.toString() + " Watts";
+//					string severity := "error";
+//					boV2.createBlackoutError(counter_blackouts, nsd3, description, instance, severity);
+//					
+//				
+//					
+//					
+//					boV2 := manageDictionary(boV2, nsd, nsd2, nsd3, "_r");
+//					
+////					publishedErrorMeasurements.add(boV2.sensorID, pe);
+//					
+//					//manageBlackoutCounter();
+//					
+//					
+//					sendErrorMessage(boV2);
+//					//counter_blackouts := counter_blackouts + 1;	
+//					
+//					findHighestUseCase1ErrorNumber();
+
+					
+					triggerUseCase1(nsd, nsd2, nsd3, "r");
+
+					/*boV2.lastEvent := nsd3;
+					boV2.sensorID := nsd.sensorID;
+					boV2.unixtimestamp_utc := nsd.getTime();
+					log "Phase R is down - Avg_Phase_R: " + averagePowerR.toString() at ERROR; 
+					createErrorMessage(boV2);*/
+				}
+			}
+		}
+	
+		on all SensorDataV2(sensorType = "V2.0", activePower_S in [-near_zero_definition:near_zero_definition]) as nsd -> 
+		SensorDataV2(sensorType = "V2.0", activePower_S in [-near_zero_definition:near_zero_definition]) as nsd2 -> 
+		SensorDataV2(sensorType = "V2.0", activePower_S in [-near_zero_definition:near_zero_definition]) as nsd3 {
+			if(nsd.sensorId = nsd2.sensorId and nsd2.sensorId = nsd3.sensorId) then {
+				float averagePowerS := (nsd.activePower_S +  nsd2.activePower_S + nsd3.activePower_S) / 3.0;
+				if (averagePowerS < near_zero_definition  and averagePowerS > -near_zero_definition) then {
+//					Blackout_V2 boV2 := new Blackout_V2;
+//					boV2.dissolveBuildingName(nsd.sensorID);
+//					string description := "Phase S has values < " + near_zero_definition.toString() + " Watts for 3 measurements.";
+//					string instance := "Phase S is under " + near_zero_definition.toString() + " Watts";
+//					string severity := "error";
+//					boV2.createBlackoutError(counter_blackouts, nsd3, description, instance, severity);
+//					
+//					boV2 := manageDictionary(boV2, nsd, nsd2, nsd3, "_s");
+//
+//					sendErrorMessage(boV2);
+//					
+//					findHighestUseCase1ErrorNumber();
+					
+					triggerUseCase1(nsd, nsd2, nsd3, "s");
+
+
+//					manageBlackoutCounter();
+//					counter_blackouts := counter_blackouts + 1;
+
+					/*boV2.lastEvent := nsd3;
+					boV2.sensorID := nsd.sensorID;
+					boV2.unixtimestamp_utc := nsd.getTime();
+					log "Phase S is down - Avg_Phase_S: " + averagePowerS.toString() at ERROR; 
+					createErrorMessage(boV2); */
+				}
+			}
+		}
+		
+		on all SensorDataV2(sensorType = "V2.0", activePower_T in [-near_zero_definition:near_zero_definition]) as nsd -> 
+		SensorDataV2(sensorType = "V2.0", activePower_T in [-near_zero_definition:near_zero_definition]) as nsd2 -> 
+		SensorDataV2(sensorType = "V2.0", activePower_T in [-near_zero_definition:near_zero_definition]) as nsd3 {
+			if(nsd.sensorId = nsd2.sensorId and nsd2.sensorId = nsd3.sensorId) then {
+				float averagePowerT := (nsd.activePower_T +  nsd2.activePower_T + nsd3.activePower_T) / 3.0;
+				if (averagePowerT < near_zero_definition and averagePowerT > -near_zero_definition) then {
+					
+					triggerUseCase1(nsd, nsd2, nsd3, "t");
+//					manageBlackoutCounter();
+//					counter_blackouts := counter_blackouts + 1;
+					
+					/*boV2.lastEvent := nsd3;
+					boV2.sensorID := nsd.sensorID;
+					boV2.unixtimestamp_utc := nsd.getTime();
+					log "Phase T is down - Avg_Phase_T: " + averagePowerT.toString() at ERROR; 
+					createErrorMessage(boV2);*/
+				}
+			}
+		}
+	}
+	
+	action sendErrorMessage (Blackout_V2 bov2) {
+		send bov2 to "mqtt:UFCG/alert/Apama/blackout_v2";
+		send bov2 to "State";
+		log bov2.toString() at ERROR;
+	}
+	
+//	action findHighestUseCase1ErrorNumber () {
+//		//get highest counter for new error events
+//		string k;
+//		integer highestErrorNumber := defaultUseCaseErrorNumber;
+//		for k in publishedErrorMeasurements.keys() { 
+//		  PublishedError myString := publishedErrorMeasurements[k];
+//		  if(myString.errorEvent.error_id > highestErrorNumber) then {
+//			  highestErrorNumber := myString.errorEvent.error_id;
+////			  print highestErrorNumber.toString() ;
+//		  }
+////		  print k + " " + myString.errorEvent.error_id.toString();
+//		}
+//		counter_blackouts := highestErrorNumber + 1;
+////		print "Highest: " + highestErrorNumber.toString();
+//		
+//	}
+	
+	action manageDictionary (Blackout_V2 boV2, SensorDataV2 nsd, SensorDataV2 nsd2, SensorDataV2 nsd3, string phaseSuffix) returns Blackout_V2 {
+		PublishedError pe := new PublishedError;
+		pe.errorEvent := boV2;
+		pe.measurement1 := nsd;
+		pe.measurement2 := nsd2;
+		pe.measurement3 := nsd3;
+		PublishedError peExist := publishedErrorMeasurements.getOrAdd(boV2.sensorID + phaseSuffix, pe);
+//		print "new__: " + pe.toString();
+//		print "exist: " + peExist.toString();
+		
+		if(peExist != pe) then {
+			//proofe if every event changed or if there are duplicate measurements in there
+			if(pe.measurement1 = peExist.measurement1 or
+					pe.measurement2 = peExist.measurement2 or
+					pe.measurement3 = peExist.measurement3 or
+					pe.measurement1 = peExist.measurement2 or
+					pe.measurement2 = peExist.measurement3 or
+					pe.measurement3 = peExist.measurement1 or
+					pe.measurement1 = peExist.measurement3 or
+					pe.measurement2 = peExist.measurement1 or
+					pe.measurement3 = peExist.measurement2) then {
+				boV2.error_id := peExist.errorEvent.error_id;
+				pe.errorEvent := boV2;
+//				print "ongoing error_id " + boV2.error_id.toString();
+				//overwrite old errorEvent on Dictionary
+				publishedErrorMeasurements.add(boV2.sensorID + phaseSuffix, pe);
+			}
+		} else {
+			//completely new one for this sensorID
+			//do nothing?
+		}
+		return boV2;
+	}
+	
+	action triggerUseCase1 (SensorDataV2 nsd, SensorDataV2 nsd2, SensorDataV2 nsd3, string phase) {
+		Blackout_V2 boV2 := new Blackout_V2;
+		boV2.dissolveBuildingName(nsd.sensorId);
+		string description := "Phase " + phase + " has values < " + near_zero_definition.toString() + " Watts for 3 measurements.";
+		string instance := "ufcg_uc01";
+		string severity := "error";
+		sequence<string> phases := new sequence<string>;
+		phases.append(phase);
+		boV2.createBlackoutError(integer.getUnique(), nsd3, description, instance, severity, phases);
+		
+		boV2 := manageDictionary(boV2, nsd, nsd2, nsd3, "_" + phase);
+		sendErrorMessage(boV2);
+		
+//		findHighestUseCase1ErrorNumber();
+
+	}
+}

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<apama-project>
+	<dependency>
+		<dependencyentry path="" kind="src"/>
+	</dependency>
+	<catalogs>
+		<catalog path="catalogs/Generated scenario blocks" type="block"/>
+		<catalog path="catalogs/ScikeBahia_UseCases blocks" type="block"/>
+		<catalog path="catalogs/ScikeBahia_UseCases functions" type="function"/>
+	</catalogs>
+	<bundles>
+		<bundle file="Industry Analytics Kit.bnd" origin-path="INDUSTRY_ANALYTICS_KIT_HOME/bundles" origin="VARIABLE">
+			<instance name=""/>
+			<config-files>
+			</config-files>
+			<bundle-instance-files>
+			</bundle-instance-files>
+			<static-files>
+			</static-files>
+			<dashboard-files>
+			</dashboard-files>
+			<evt-files>
+				<file name="../events/Ready.evt" timestamp="1513786882000"/>
+			</evt-files>
+		</bundle>
+		<bundle file="QuerySupport.bnd" origin-path="" origin="PRODUCT_CATALOG">
+			<instance name=""/>
+			<config-files>
+			</config-files>
+			<bundle-instance-files>
+			</bundle-instance-files>
+			<static-files>
+			</static-files>
+			<dashboard-files>
+			</dashboard-files>
+			<evt-files>
+				<file name="${APAMA_HOME}/monitors/query_support/AllQueriesInjected.evt" timestamp="1547046253108"/>
+			</evt-files>
+		</bundle>
+		<bundle file="UserDefinedConnectivityPlugins.bnd" origin-path="" origin="CONNECTIVITY_CATALOG">
+			<config-files>
+			</config-files>
+			<bundle-instance-files>
+				<file name="../bundles/UserDefinedConnectivityPlugins/@INSTANCE_NAME@.plugins.yaml" timestamp="1544627468384"/>
+				<file name="../bundles/UserDefinedConnectivityPlugins/@INSTANCE_NAME@.chains.yaml" timestamp="1544627468384"/>
+				<file name="../bundles/UserDefinedConnectivityPlugins/@INSTANCE_NAME@.properties" timestamp="1544627468384"/>
+			</bundle-instance-files>
+			<static-files>
+			</static-files>
+			<dashboard-files>
+			</dashboard-files>
+			<evt-files>
+			</evt-files>
+		</bundle>
+		<bundle file="MQTTConnectivity.bnd" origin-path="" origin="CONNECTIVITY_CATALOG">
+			<config-files>
+			</config-files>
+			<bundle-instance-files>
+				<file name="../bundles/MQTTConnectivity/@INSTANCE_NAME@.properties" timestamp="1544627468384"/>
+				<file name="../bundles/MQTTConnectivity/@INSTANCE_NAME@.yaml" timestamp="1544627468384"/>
+			</bundle-instance-files>
+			<static-files>
+			</static-files>
+			<dashboard-files>
+			</dashboard-files>
+			<evt-files>
+			</evt-files>
+		</bundle>
+	</bundles>
+</apama-project>

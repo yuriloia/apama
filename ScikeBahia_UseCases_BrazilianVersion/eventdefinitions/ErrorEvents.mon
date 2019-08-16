@@ -1,0 +1,142 @@
+//*****************************************************************************
+// Title:         ErrorEvents
+// Description:   ErrorEvents description
+// Dependencies:  None
+// Author:        tif
+//
+//*****************************************************************************
+
+package com.softwareag.scike;
+
+using com.apama.correlator.timeformat.TimeFormat;
+//using com.apama.correlator.timeformat.CompiledPattern;
+
+
+event Blackout {
+	string severity;
+	string instance;
+	integer error_id;
+	string description;
+	
+	string building;
+	string sensorID; 
+	float unixtimestamp_utc;
+	PowerConsumption_Building lastEvent;
+}
+
+event Blackout_V2 {
+	string severity;
+	string instance;
+	integer error_id;
+	string description;
+	sequence<string> phase;
+	string building;
+	string sensorID; 
+//	float unixtimestamp_utc;
+	string error_timestamp;
+	SensorDataV2 lastEvent;
+	
+	action dissolveBuildingName(string sensorId) {
+		building := "Unknown_Building";
+		if(sensorId = "0001V2") then {
+			building := "UFCG_Bloco_CJ";
+		} else if ( sensorId = "0002V2") then {
+			building := "UFCG_LABFREN";
+		} else if ( sensorId = "0003V2") then {
+			building := "UFCG_LABMET";
+		} else if ( sensorId = "0004V2") then {
+			building := "UFPB_CampusIV_C";
+		} else if ( sensorId = "0006V2") then {
+			building := "UFCG_BO";
+		} else if ( sensorId = "0007V2") then {
+			building := "UFCG_BA";
+		} else if ( sensorId = "0008V2") then {
+			building := "UFPB_Bloco_B";
+		} else if ( sensorId = "0010V2") then {
+			building := "UFCG_CW";
+		} else if ( sensorId = "0011V3") then {
+			building := "UFCG_AJ";
+		} 		
+	}
+	
+	action createBlackoutError (integer counter_blackouts, SensorDataV2 nsd, string _description, string _instance, string _severity, sequence<string> _phase) {
+		error_id := counter_blackouts;
+		description := _description;
+		instance := _instance;
+//		if(building.find("UFPB") != -1) then {
+//			instance := instance.replace("ufcg", "ufpb");
+//		}
+ 		phase := _phase;
+ 		if(nsd.readingTime.find("-03:00") = -1) {
+ 			nsd.readingTime := nsd.readingTime + "-03:00";
+ 			nsd.readingTime := nsd.readingTime.replace(" ", "T");
+ 		}
+		lastEvent := nsd;
+		sensorID := nsd.sensorId;
+		//in test scenario
+		if(nsd.readingTime.find("2008-") != -1) then {
+			_severity := "test_" + _severity;
+		}
+		severity := _severity;
+		
+		error_timestamp := createErrorTimestamp();
+	}
+	
+	action createErrorTimestamp () returns string {
+		string pattern := "yyyy-MM-dd'T'hh:mm:ss.S'Z'";
+		string errortime := TimeFormat.formatWithTimeZone(currentTime, pattern, "UTC");
+		return errortime;
+	}
+}
+
+event Blackout_Solar_V2 {
+	string severity;
+	string instance;
+	integer error_id;
+	string description;
+	sequence<string> phase;
+	string building;
+	string sensorID; 
+//	float unixtimestamp_utc;
+	string error_timestamp;
+	SolarDataV2 lastEvent;
+	
+	action dissolveBuildingName(string sensorId) {
+		building := "Unknown_SolarBuilding";
+		if ( sensorId = "0005V2") then {
+			building := "UFCG_LEIAM";
+		}
+	}
+	
+	action createBlackoutError (integer counter_blackouts, SolarDataV2 nsd, string _description, string _instance, string _severity, sequence<string> _phase) {
+		error_id := counter_blackouts;
+		description := _description;
+		instance := _instance;
+//		if(building.find("UFPB") != -1) then {
+//			instance := instance.replace("ufcg", "ufpb");
+//		}
+		phase := _phase;
+ 		if(nsd.readingTime.find("-03:00") = -1) {
+ 			nsd.readingTime := nsd.readingTime + "-03:00";
+ 		}
+ 		lastEvent := nsd;
+		sensorID := nsd.sensorId;
+		//in test scenario
+		if(nsd.readingTime.find("2008-") != -1) then {
+			_severity := "test_" + _severity;
+		}
+		severity := _severity;
+		
+		error_timestamp := createErrorTimestamp();
+
+//		TimeFormat tf := new TimeFormat;
+//		tf.
+//		unixtimestamp_utc := currentTime;
+	}
+	
+	action createErrorTimestamp () returns string {
+		string pattern := "yyyy-MM-dd'T'hh:mm:ss.S'Z'";
+		string errortime := TimeFormat.formatWithTimeZone(currentTime, pattern, "UTC");
+		return errortime;
+	}
+}

@@ -1,0 +1,29 @@
+# $Copyright (c) 2015 Software AG, Darmstadt, Germany and/or Software AG USA Inc., Reston, VA, USA, and/or its subsidiaries and/or its affiliates and/or their licensors.$
+# Use, reproduction, transfer, publication or disclosure is prohibited except as specifically provided for in your License Agreement with Software AG
+#
+
+plugins:
+#  UMTransport:
+#    libraryName: UMConnectivity
+#    class: UMTransport
+#  UMStringCodec:
+#    libraryName: UMConnectivity
+#    class: UMStringCodec
+#  JSONCodec:
+#    directory: ${APAMA_HOME}/lib/
+#    classpath:
+#    - json-codec.jar
+#    class: com.softwareag.connectivity.plugins.JSONCodec
+  MQTTreliableTransport:
+      directory: lib
+#      directory: ScikeBahia_UseCases_BrazilianVersion/lib
+      classpath: 
+         - gson-2.8.5.jar
+         - org.eclipse.paho.client.mqttv3-1.1.0.jar
+         - MQTTreliableTransport.jar
+      class: MQTTreliableTransport
+#    transportForAProtocol:
+#      classpath:
+#           - protocoltransport.jar
+#           - protocolimpl.jar 
+
